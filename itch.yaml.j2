@@ -1,0 +1,11 @@
+---
+members:
+{% for host in hostvars %}
+  - {{ hostvars[host]['private_ip'] }}:7777
+{% endfor %}
+maxLogFileMegabytes: 10
+payloadBytes: 100
+heartbeatPeriodMs: 2000
+prometheus:
+  enabled: True
+  port: 9090

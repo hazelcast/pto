@@ -1,0 +1,38 @@
+---
+- name: Install ITCH
+  hosts: all
+  tasks:
+    - name: Install java, maven and git 
+      yum: 
+        name:
+          - java-17-amazon-corretto-headless
+          - maven
+          - git
+        state: present
+      become: true
+    - name: download ITCH 
+      git:
+        repo: https://github.com/wrmay/ITCH
+        dest: ./ITCH
+        version: 1.0.1
+        force: true
+    - name: build ITCH
+      shell: 
+        cmd: mvn package
+        chdir: ./ITCH 
+        creates: target/itch-1.0.1.jar 
+    - name: generate the ITCH configuration file
+      template:
+        src: itch.yaml.j2
+        dest: ./ITCH/itch.yaml
+    - name: install systemd service file 
+      copy:
+        src: itch.service
+        dest: /etc/systemd/system/itch.service
+      become: true
+    - name: start the itch service
+      systemd:
+        name: itch
+        daemon_reload: true
+        state: started
+      become: true

@@ -1,0 +1,15 @@
+---
+- name: Restart ITCH
+  hosts: all
+  tasks:
+    - name: stop the itch service
+      systemd:
+        name: itch
+        state: stopped
+      become: true
+
+    - name: start the itch service
+      systemd:
+        name: itch
+        state: started
+      become: true
