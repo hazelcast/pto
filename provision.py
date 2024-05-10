@@ -1,4 +1,5 @@
 import argparse
+import jinja2
 import json
 import re
 import sys
@@ -86,20 +87,25 @@ for output in stack_description['Stacks'][0]['Outputs']:
 
 
 inventory_file = os.path.join(os.path.dirname(templatefile),'inventory.ini')
+scriptdir = os.path.dirname(os.path.realpath(__file__))
+j2env = jinja2.Environment(loader=jinja2.FileSystemLoader(scriptdir), trim_blocks=True, lstrip_blocks=True)
+inventory_template = j2env.get_template('inventory.ini.j2')
+
 with open(inventory_file,'w') as f:
-    f.write('[servers]\n')
-    for n, attrs in sorted(servers.items()):
-        f.write(f"{attrs['PublicIP']} private_ip={attrs['PrivateIP']}\n")
+    inventory_template.stream(servers=servers, perftesters= perftesters, viewers=viewers).dump(f)
+    # f.write('[servers]\n')
+    # for n, attrs in sorted(servers.items()):
+    #     f.write(f"{attrs['PublicIP']} private_ip={attrs['PrivateIP']}\n")
 
-    f.write('\n')
-    f.write('[loadtesters]\n')
-    for n, attrs in sorted(perftesters.items()):
-        f.write(f"{attrs['PublicIP']} private_ip={attrs['PrivateIP']}\n")
+    # f.write('\n')
+    # f.write('[loadtesters]\n')
+    # for n, attrs in sorted(perftesters.items()):
+    #     f.write(f"{attrs['PublicIP']} private_ip={attrs['PrivateIP']}\n")
 
-    f.write('\n')
-    f.write('[viewers]\n')
-    for n, attrs in sorted(viewers.items()):
-        f.write(f"{attrs['PublicIP']} private_ip={attrs['PrivateIP']}\n")
+    # f.write('\n')
+    # f.write('[viewers]\n')
+    # for n, attrs in sorted(viewers.items()):
+    #     f.write(f"{attrs['PublicIP']} private_ip={attrs['PrivateIP']}\n")
 
 print(f'wrote inventory to {inventory_file}')
 
