@@ -1,0 +1,24 @@
+all:
+    vars:
+        itch_version: "1.0.2"
+
+servers:
+    hosts:
+{% for server in servers.values() %}
+        {{ server.PublicIP }}: 
+            private_ip: "{{ server.PrivateIP }}"
+{% endfor %}
+
+loadtesters:
+    hosts:
+{% for server in perftesters.values() %}
+        {{ server.PublicIP }}: 
+            private_ip: "{{ server.PrivateIP }}"
+{% endfor %}
+
+viewers:
+    hosts:
+{% for server in viewers.values() %}
+        {{ server.PublicIP }}: 
+            private_ip: "{{ server.PrivateIP }}"
+{% endfor %}
