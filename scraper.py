@@ -31,6 +31,14 @@ all_hosts = get_hosts(['servers','loadtesters','viewers'])
 network_file_name = os.path.join(scriptdir,'network.csv')
 cpu_file_name = os.path.join(scriptdir, 'cpu.csv')
 
+if not os.path.isfile(network_file_name):
+    with open(network_file_name,'w') as f:
+        print("timestamp,source_ip,destination_ip,latency_ms", file=f)
+
+if not os.path.isfile(cpu_file_name):
+    with open(cpu_file_name,'w') as f:
+        print("timestamp,host_ip,load_average_1m", file=f)
+
 now = time.time()
 next_run = now + STATS_COLLECTION_PERIOD_S
 while True:
