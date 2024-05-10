@@ -1,3 +1,5 @@
 venv/
 inventory.ini
+inventory.yaml
 environment.yaml
+*.csv
