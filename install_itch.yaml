@@ -14,20 +14,20 @@
       git:
         repo: https://github.com/wrmay/ITCH
         dest: ./ITCH
-        version: 1.0.1
+        version: '{{ itch_version }}'
         force: true
     - name: build ITCH
       shell: 
         cmd: mvn package
         chdir: ./ITCH 
-        creates: target/itch-1.0.1.jar 
+        creates: target/itch-{{ itch_version }}.jar 
     - name: generate the ITCH configuration file
       template:
         src: itch.yaml.j2
         dest: ./ITCH/itch.yaml
-    - name: install systemd service file 
-      copy:
-        src: itch.service
+    - name: generate the ITCH unit file for systemd
+      template:
+        src: itch.service.j2
         dest: /etc/systemd/system/itch.service
       become: true
     - name: start the itch service

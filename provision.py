@@ -93,19 +93,6 @@ inventory_template = j2env.get_template('inventory.ini.j2')
 
 with open(inventory_file,'w') as f:
     inventory_template.stream(servers=servers, perftesters= perftesters, viewers=viewers).dump(f)
-    # f.write('[servers]\n')
-    # for n, attrs in sorted(servers.items()):
-    #     f.write(f"{attrs['PublicIP']} private_ip={attrs['PrivateIP']}\n")
-
-    # f.write('\n')
-    # f.write('[loadtesters]\n')
-    # for n, attrs in sorted(perftesters.items()):
-    #     f.write(f"{attrs['PublicIP']} private_ip={attrs['PrivateIP']}\n")
-
-    # f.write('\n')
-    # f.write('[viewers]\n')
-    # for n, attrs in sorted(viewers.items()):
-    #     f.write(f"{attrs['PublicIP']} private_ip={attrs['PrivateIP']}\n")
 
 print(f'wrote inventory to {inventory_file}')
 

@@ -10,7 +10,7 @@ User=ec2-user
 Type=simple
 
 WorkingDirectory=/home/ec2-user/ITCH
-ExecStart=/usr/bin/java -cp target/itch-1.0.1.jar com.sorintlab.itch.Itch
+ExecStart=/usr/bin/java -cp target/itch-{{ itch_version }}.jar com.sorintlab.itch.Itch
 ExecStop=/bin/kill -15 $MAINPID
 
 Restart=always
