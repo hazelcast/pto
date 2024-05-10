@@ -86,10 +86,10 @@ for output in stack_description['Stacks'][0]['Outputs']:
     attrs[item_attr] = value
 
 
-inventory_file = os.path.join(os.path.dirname(templatefile),'inventory.ini')
+inventory_file = os.path.join(os.path.dirname(templatefile),'inventory.yaml')
 scriptdir = os.path.dirname(os.path.realpath(__file__))
 j2env = jinja2.Environment(loader=jinja2.FileSystemLoader(scriptdir), trim_blocks=True, lstrip_blocks=True)
-inventory_template = j2env.get_template('inventory.ini.j2')
+inventory_template = j2env.get_template('inventory.yaml.j2')
 
 with open(inventory_file,'w') as f:
     inventory_template.stream(servers=servers, perftesters= perftesters, viewers=viewers).dump(f)
