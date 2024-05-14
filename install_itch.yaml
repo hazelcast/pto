@@ -5,7 +5,7 @@
     - name: Install java, maven and git 
       yum: 
         name:
-          - java-17-amazon-corretto-headless
+          # - java-17-amazon-corretto-headless
           - maven
           - git
         state: present

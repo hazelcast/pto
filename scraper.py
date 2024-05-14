@@ -21,13 +21,13 @@ def get_hosts(group_list):
     return hosts
 
 def write_cpu_stat(f, t, val, attr_dict):
-    print(f'{t},{attr_dict['host']},{val}', file=f)
+    print(f'{t},{attr_dict["host"]},{val}', file=f)
 
 def write_net_stat(f, t, val, attr_dict):
-    print(f'{t},{attr_dict['source']},{attr_dict['destination']},{val}', file=f)
+    print(f'{t},{attr_dict["source"]},{attr_dict["destination"]},{val}', file=f)
 
 scriptdir = os.path.dirname(os.path.realpath(__file__))
-all_hosts = get_hosts(['servers','loadtesters','viewers'])
+all_hosts = get_hosts(['nodes','loadgenerators','mc'])
 network_file_name = os.path.join(scriptdir,'network.csv')
 cpu_file_name = os.path.join(scriptdir, 'cpu.csv')
 

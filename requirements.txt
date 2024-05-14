@@ -9,6 +9,7 @@ contourpy==1.2.1
 cryptography==42.0.7
 cycler==0.12.1
 fonttools==4.51.0
+hdrhistogram==0.10.3
 idna==3.7
 Jinja2==3.1.4
 jmespath==1.0.1
@@ -18,7 +19,9 @@ matplotlib==3.8.4
 numpy==1.26.4
 packaging==24.0
 pandas==2.2.2
+pbr==6.0.0
 pillow==10.3.0
+plotly==5.22.0
 pycparser==2.22
 pyparsing==3.1.2
 python-dateutil==2.9.0.post0
@@ -29,5 +32,6 @@ resolvelib==1.0.1
 s3transfer==0.10.1
 seaborn==0.13.2
 six==1.16.0
+tenacity==8.3.0
 tzdata==2024.1
 urllib3==2.2.1

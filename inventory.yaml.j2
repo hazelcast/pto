@@ -1,22 +1,24 @@
 all:
     vars:
         itch_version: "1.0.3"
+        ansible_ssh_private_key_file: {{ ansible_ssh_private_key_file }}
+        ansible_user: {{ ansible_user }}
 
-servers:
+nodes:
     hosts:
 {% for server in servers.values() %}
         {{ server.PublicIP }}: 
             private_ip: "{{ server.PrivateIP }}"
 {% endfor %}
 
-loadtesters:
+loadgenerators:
     hosts:
 {% for server in perftesters.values() %}
         {{ server.PublicIP }}: 
             private_ip: "{{ server.PrivateIP }}"
 {% endfor %}
 
-viewers:
+mc:
     hosts:
 {% for server in viewers.values() %}
         {{ server.PublicIP }}: 
