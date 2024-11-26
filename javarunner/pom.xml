@@ -67,9 +67,6 @@
         </plugin>
         <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
-          <configuration>
-            <release>19</release>
-          </configuration>
           <version>3.8.0</version>
         </plugin>
         <plugin>
