@@ -6,7 +6,7 @@ certifi==2024.2.2
 cffi==1.16.0
 charset-normalizer==3.3.2
 contourpy==1.2.1
-cryptography==42.0.7
+cryptography==43.0.1
 cycler==0.12.1
 fonttools==4.51.0
 hdrhistogram==0.10.3
