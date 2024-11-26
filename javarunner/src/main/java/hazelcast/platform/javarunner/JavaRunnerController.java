@@ -6,6 +6,7 @@ import io.prometheus.metrics.core.metrics.Histogram;
 import jakarta.annotation.PostConstruct;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -23,7 +24,7 @@ public class JavaRunnerController {
     private volatile Counter requestCount;
     private volatile Histogram requestLatency;
 
-    private Gauge workerSleepTimeMs;
+    private Gauge workerSleepTime;
 
 //    private Counter successCount;
 //    private Counter failCount;
@@ -44,26 +45,14 @@ public class JavaRunnerController {
                 .labelNames("test_name")
                 .register();
 
-//        successCount = Counter.builder()
-//                .name("success_count")
-//                .help("number of tests requests that completed successfully")
-//                .labelNames("test_name")
-//                .register();
-//
-//        failCount = Counter.builder()
-//                .name("failure_count")
-//                .help("number of tests requests that failed")
-//                .labelNames("test_name")
-//                .register();
-
         requestLatency = Histogram.builder()
                 .name("response_time")
                 .help("time, in milliseconds, for the request to return")
                 .labelNames("test_name")
                 .register();
 
-        workerSleepTimeMs = Gauge.builder().name("test_worker_sleep_ms")
-                .help("the amount of time (in ms) the test worker threads rest between invocations - less than or equal to 0 means this thread cannot keep up")
+        workerSleepTime = Gauge.builder().name("test_worker_sleep_s")
+                .help("the amount of time (in seconds) the test worker threads rest between invocations - less than or equal to 0 means this thread cannot keep up")
                 .labelNames("test_name", "thread_name")
                 .register();
     }
@@ -89,13 +78,12 @@ public class JavaRunnerController {
                             rate,
                             requestCount,
                             requestLatency,
-                            workerSleepTimeMs,
+                            workerSleepTime,
                             stopped);
                     workers[i].start();
                 }
 
-                Stopper stopper = new Stopper();
-                executorService.schedule(new Thread(stopper::run), config.getDurationSeconds(), TimeUnit.SECONDS );
+                executorService.schedule(new Thread(this::waitForStop), config.getDurationSeconds(), TimeUnit.SECONDS );
                 // start the loop
             } catch (ClassNotFoundException | InstantiationException | IllegalAccessException |
                      NoSuchMethodException | InvocationTargetException e) {
@@ -107,17 +95,30 @@ public class JavaRunnerController {
         }
     }
 
-    private class Stopper {
-        public void run(){
-            stopped.set(true);
-            for (Thread t: workers) {
-                try {
-                    t.join(2000);
-                } catch(InterruptedException ix){
-                    break;
-                }
+    /*
+     * Possible Status: NOT_STARTED, RUNNING, STOPPED_SUCCESS, STOPPED_TOO_SLOW, STOPPED_ERROR
+     */
+    @GetMapping("/status")
+    public ResponseEntity<String> status(){
+    }
+
+    @GetMapping("/stop")
+    public ResponseEntity<String> stop(){
+        waitForStop();
+        return new ResponseEntity<>("OK", HttpStatus.OK);
+    }
+
+    void waitForStop(){
+        if (stopped.get()) return;
+
+        stopped.set(true);
+        for (Thread t: workers) {
+            try {
+                t.join(2000);
+            } catch(InterruptedException ix){
+                break;
             }
-            currentTest = null;
         }
+        currentTest = null;
     }
 }
