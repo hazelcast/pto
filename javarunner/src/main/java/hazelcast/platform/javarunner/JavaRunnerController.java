@@ -19,21 +19,20 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 @RestController
 public class JavaRunnerController {
-
+    enum Status {NOT_STARTED, RUNNING, STOPPED_OK, STOPPED_ERROR, STOPPED_TOO_SLOW}
     private ScheduledExecutorService executorService;
     private volatile Counter requestCount;
     private volatile Histogram requestLatency;
 
     private Gauge workerSleepTime;
 
-//    private Counter successCount;
-//    private Counter failCount;
-
     private volatile JavaTest currentTest;
 
     private Thread []workers;
 
     private AtomicBoolean stopped;
+
+    private Status status = Status.NOT_STARTED;
 
     @PostConstruct
     public void init(){
@@ -49,6 +48,7 @@ public class JavaRunnerController {
                 .name("response_time")
                 .help("time, in milliseconds, for the request to return")
                 .labelNames("test_name")
+                .classicExponentialUpperBounds(.000001,2, 24)
                 .register();
 
         workerSleepTime = Gauge.builder().name("test_worker_sleep_s")
@@ -65,30 +65,27 @@ public class JavaRunnerController {
                 // build the test instance
                 Class<?> testClass = Class.forName(config.getTestClass());
                 currentTest = (JavaTest) testClass.getDeclaredConstructor().newInstance();
-                currentTest.init(config.getTestProperties());
+                currentTest.init(config.getTestName(), config.getTestProperties());
 
                 int threadCount = config.getThreads();
                 int rate = config.getRequestsPerSecondPerThread();
 
                 workers = new Thread[threadCount];
                 for(int i=0;i< threadCount; ++i){
-                    workers[i] = new WorkerThread(
-                            config.getTestName(),
-                            currentTest,
-                            rate,
-                            requestCount,
-                            requestLatency,
-                            workerSleepTime,
-                            stopped);
+                    workers[i] = new WorkerThread(currentTest, rate, this);
+                    workers[i].setName(String.format("worker-%04d", i));
                     workers[i].start();
                 }
 
-                executorService.schedule(new Thread(this::waitForStop), config.getDurationSeconds(), TimeUnit.SECONDS );
+                executorService.schedule(new Thread(this::stopAllAndWait), config.getDurationSeconds(), TimeUnit.SECONDS );
                 // start the loop
             } catch (ClassNotFoundException | InstantiationException | IllegalAccessException |
                      NoSuchMethodException | InvocationTargetException e) {
+                status = Status.STOPPED_ERROR;
                 return new ResponseEntity<>("TEST CLASS " + config.getTestClass() +  " COULD NOT BE INSTANTIATED VIA NO-ARG CTOR", HttpStatus.INTERNAL_SERVER_ERROR);
             }
+            stopped.set(false);
+            status = Status.RUNNING;
             return new ResponseEntity<>("TEST " + config.getTestClass() + " STARTED", HttpStatus.OK);
         } else {
             return new ResponseEntity<>("TEST ALREADY IN PROGRESS", HttpStatus.LOCKED);
@@ -96,19 +93,28 @@ public class JavaRunnerController {
     }
 
     /*
-     * Possible Status: NOT_STARTED, RUNNING, STOPPED_SUCCESS, STOPPED_TOO_SLOW, STOPPED_ERROR
+     * Possible Status: NOT_STARTED, RUNNING, STOPPED_OK, STOPPED_TOO_SLOW, STOPPED_ERROR
      */
     @GetMapping("/status")
-    public ResponseEntity<String> status(){
+    public synchronized ResponseEntity<String> status(){
+        return new ResponseEntity<>(status.name(), HttpStatus.OK);
     }
 
     @GetMapping("/stop")
-    public ResponseEntity<String> stop(){
-        waitForStop();
+    public synchronized ResponseEntity<String> stop(){
+        stopAllAndWait();
         return new ResponseEntity<>("OK", HttpStatus.OK);
     }
 
-    void waitForStop(){
+    boolean isStopped(){
+        return stopped.get();
+    }
+
+    void stopAll(Status stopReason){
+        stopped.set(true);
+        status = stopReason;
+    }
+    void stopAllAndWait(){
         if (stopped.get()) return;
 
         stopped.set(true);
@@ -120,5 +126,19 @@ public class JavaRunnerController {
             }
         }
         currentTest = null;
+        status = Status.STOPPED_OK;
+    }
+
+    // metrics recording methods
+    void recordWorkerSleepTime(double sleepTime){
+        workerSleepTime.labelValues(currentTest.getTestName(), Thread.currentThread().getName()).set(sleepTime);
+    }
+
+    void recordLatency(Runnable r){
+        requestLatency.labelValues(currentTest.getTestName()).time(r);
+    }
+
+    void incrementRequestCount(){
+        requestCount.labelValues(currentTest.getTestName()).inc();
     }
 }

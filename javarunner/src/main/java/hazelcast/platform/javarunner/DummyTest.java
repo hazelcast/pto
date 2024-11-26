@@ -3,9 +3,9 @@ package hazelcast.platform.javarunner;
 import java.util.Map;
 import java.util.Random;
 
-public class DummyTest implements JavaTest {
+public class DummyTest extends JavaTest {
 
-    private Random rand = new Random();
+    private final Random rand = new Random();
     @Override
     public void init(Map<String, String> testProps) {
 

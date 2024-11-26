@@ -19,8 +19,8 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.source>17</maven.compiler.source>
-    <maven.compiler.target>17</maven.compiler.target>
+    <maven.compiler.source>21</maven.compiler.source>
+    <maven.compiler.target>21</maven.compiler.target>
     <prometheus.version>1.0.0</prometheus.version>
   </properties>
 
@@ -67,6 +67,9 @@
         </plugin>
         <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
+          <configuration>
+            <release>19</release>
+          </configuration>
           <version>3.8.0</version>
         </plugin>
         <plugin>

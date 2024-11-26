@@ -1,50 +1,36 @@
 package hazelcast.platform.javarunner;
 
-import io.prometheus.metrics.core.metrics.Counter;
-import io.prometheus.metrics.core.metrics.Gauge;
-import io.prometheus.metrics.core.metrics.Histogram;
-
 import java.time.Duration;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class WorkerThread extends Thread {
     private static final long MAXIMUM_LATE_NANOS = 5_000_000_000L;  // 5 seconds
-    public WorkerThread(String testName, JavaTest test, int rate, Counter requestCount, Histogram requestLatency, Gauge workerSleepTime, AtomicBoolean stopped) {
-        this.testName = testName;
+    public WorkerThread(JavaTest test, int rate, JavaRunnerController controller) {
         this.test = test;
         this.rate = rate;
-        this.requestCount = requestCount;
-        this.requestLatency = requestLatency;
-        this.stopped = stopped;
-        this.workerSleepTime = workerSleepTime;
+        this.controller = controller;
     }
 
-    private final String testName;
     private final JavaTest test;
-    private final Counter requestCount;
-    private final Histogram requestLatency;
-
-    private final Gauge workerSleepTime;
-    private final AtomicBoolean stopped;
-
     private final int rate;
+
+    private final  JavaRunnerController controller;
 
     public void run(){
         long interval = 1_000_000_000L / rate;
 
         long now = System.nanoTime();
         long nextRun = now;
-        while(!stopped.get()){
-            long sleep = nextRun - now;
-            workerSleepTime.labelValues(testName, Thread.currentThread().getName()).set((double) sleep / (double) 1_000_000_000L);
+        while(!controller.isStopped()){
+            long sleep = nextRun - System.nanoTime();
+            controller.recordWorkerSleepTime((double) sleep / (double) 1_000_000_000L);
             if (sleep <= -MAXIMUM_LATE_NANOS){
-                stopped.set(true);
+                controller.stopAll(JavaRunnerController.Status.STOPPED_TOO_SLOW);
                 System.out.println("Stopping test thread because it can not maintain the required rate");
                 continue;
             }
             if (sleep > 0){
                 try {
-                    Thread.sleep(Duration.ofNanos(sleep));
+                    Thread.sleep(sleep/1_000_000L, (int) (sleep % 1_000_000));
                 } catch(InterruptedException ix){
                     System.out.println("Worker interrupted");
                     break;
@@ -53,8 +39,8 @@ public class WorkerThread extends Thread {
 
             Object testCase = test.prepareNext();
 
-            requestLatency.labelValues(testName).time( () -> test.runTest(testCase));
-            requestCount.labelValues(testName).inc();
+            controller.recordLatency(() -> test.runTest(testCase));
+            controller.incrementRequestCount();
 
             nextRun += interval;
         }

@@ -2,11 +2,19 @@ package hazelcast.platform.javarunner;
 
 import java.util.Map;
 
-public interface JavaTest {
-    public void init(Map<String,String> testProps);
+public abstract class JavaTest {
+    private  String testName;
+    public  void init(String testName, Map<String,String> testProps){
+        this.testName = testName;
+    }
 
-    public Object prepareNext();
+    public abstract void init( Map<String,String> testProps);
 
-    public void runTest(Object t);
+    public abstract Object prepareNext();
 
+    public abstract void runTest(Object t);
+
+    public String getTestName() {
+        return testName;
+    }
 }
